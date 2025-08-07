@@ -29,3 +29,7 @@ export interface IApi {
   baseUrl: string;
   requestOptions: string;
 }
+
+export type FormErrors = {
+  [key in keyof IOrder]?: string;
+};

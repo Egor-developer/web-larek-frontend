@@ -1,104 +1,84 @@
-import {
-  IProduct,
-  IOrderForm,
-} from '../types';
-
+import { IProduct, IOrder, FormErrors } from '../types';
 import { IEvents } from './base/events';
 
 export class AppState {
   catalog: IProduct[] = [];
-  preview: string | null = null;
-  basket: {
-    items: string[];
-    total: number;
-  } = {
-    items: [],
-    total: 0,
-  };
-
-  order: IOrderForm = {
+  basketList: IProduct[] = [];
+  order: IOrder = {
     email: '',
     phone: '',
     address: '',
     payment: undefined,
     total: undefined,
+    items: [],
   };
-
-  formErrors: { [key in keyof IOrderForm]?: string } = {};
+  formErrors: FormErrors = {};
 
   constructor(protected events: IEvents) {}
 
-  setItems(items: IProduct[]) {
+  // Количество товаров в корзине
+  getTotal(): number {
+    return this.basketList.length;
+  }
+
+  // Общая сумма товаров в корзине
+  getTotalPrice(): number {
+    return this.basketList.reduce((sum, item) => sum + (item.price ?? 0), 0);
+  }
+
+  // Установить список товаров
+  setCatalog(items: IProduct[]) {
     this.catalog = items;
-    this.events.emit('items:changed', this.catalog);
+    this.events.emit('catalog:changed', this.catalog);
   }
 
-  setPreview(item: IProduct) {
-    this.preview = item.id;
-    this.events.emit('preview:changed', { preview: item.id });
-  }
-
-  addToBasket(item: IProduct) {
-    if (!this.basket.items.includes(item.id)) {
-      this.basket.items.push(item.id);
-      this.basket.total += item.price ?? 0;
-      this.events.emit('basket:changed', this.basket);
-    }
-  }
-
-  inBasket(item: IProduct) {
-    return this.basket.items.includes(item.id);
-  }
-
-  removeFromBasket(item: IProduct) {
-    this.basket.items = this.basket.items.filter((id) => id !== item.id);
-    this.basket.total -= item.price ?? 0;
-    this.events.emit('basket:changed', this.basket);
-  }
-
+  // Очистить корзину
   clearBasket() {
-    this.basket.items = [];
-    this.basket.total = 0;
-    this.events.emit('basket:changed', this.basket);
+    this.basketList = [];
+    this.events.emit('basket:changed', this.basketList);
   }
 
-  setPayment(method: string) {
-    this.order.payment = method;
-  }
-
-  setOrderField(field: keyof IOrderForm, value: string | number) {
-    if (field === 'payment') {
-      this.order.payment = value as string;
-    } else if (field === 'total') {
-      this.order.total = value;
-    } else {
-      this.order[field] = value as string;
-    }
-  }
-
-  setFormError(field: keyof IOrderForm, error: string) {
-    this.formErrors[field] = error;
-    this.events.emit('form:error', { field, error });
-  }
-
-  validateContacts(): boolean {
+  // Очистить заказ
+  clearOrder() {
+    this.order = {
+      email: '',
+      phone: '',
+      address: '',
+      payment: undefined,
+      total: undefined,
+      items: [],
+    };
     this.formErrors = {};
-
-    if (!this.order.email?.trim()) {
-      this.formErrors.email = 'Введите email';
-    } else if (!/^\S+@\S+\.\S+$/.test(this.order.email)) {
-      this.formErrors.email = 'Некорректный email';
-    }
-
-    if (!this.order.phone?.trim()) {
-      this.formErrors.phone = 'Введите номер телефона';
-    } else if (!/^\+?\d{10,15}$/.test(this.order.phone)) {
-      this.formErrors.phone = 'Некорректный номер телефона';
-    }
-
-    return Object.keys(this.formErrors).length === 0;
+    this.events.emit('order:changed', this.order);
   }
 
+  // Добавить товар в корзину
+  addBasketList(item: IProduct) {
+    if (!this.basketList.find(p => p.id === item.id)) {
+      this.basketList.push(item);
+      this.events.emit('basket:changed', this.basketList);
+    }
+  }
+
+  // Удалить товар из корзины по id
+  changeBasketList(id: string) {
+    this.basketList = this.basketList.filter(p => p.id !== id);
+    this.events.emit('basket:changed', this.basketList);
+  }
+
+  // Установить поле заказа (например, адрес или способ оплаты)
+  setOrderField(field: keyof IOrder, value: string | number) {
+    this.order[field] = value as never;
+    this.events.emit('order:changed', this.order);
+  }
+
+  // Установить поле контактов (например, email или телефон)
+  setContactsField(field: 'email' | 'phone', value: string) {
+  this.order[field] = value;
+  this.events.emit('order:changed', this.order);
+}
+
+  // Валидация данных заказа
   validateOrder(): boolean {
     this.formErrors = {};
 
@@ -110,10 +90,37 @@ export class AppState {
       this.formErrors.payment = 'Выберите способ оплаты';
     }
 
+    this.emitFormErrors();
+    return Object.keys(this.formErrors).length === 0;
+  }
+
+  // Валидация контактов
+  validateContacts(): boolean {
+  this.formErrors = {};
+
+  // Проверка email
+  if (!this.order.email || !this.order.email.trim()) {
+    this.formErrors.email = 'Введите email';
+  } else if (!/^\S+@\S+\.\S+$/.test(this.order.email.trim())) {
+    this.formErrors.email = 'Некорректный email';
+  }
+
+  // Проверка телефона
+  if (!this.order.phone || !this.order.phone.trim()) {
+    this.formErrors.phone = 'Введите номер телефона';
+  } else if (!/^\+?\d{10,15}$/.test(this.order.phone.trim())) {
+    this.formErrors.phone = 'Некорректный номер телефона';
+  }
+
+  this.emitFormErrors();
+
+  return Object.keys(this.formErrors).length === 0;
+}
+
+  // Отправить ошибки формы через события
+  private emitFormErrors() {
     Object.entries(this.formErrors).forEach(([field, error]) => {
       this.events.emit('form:error', { field, error });
     });
-
-    return Object.keys(this.formErrors).length === 0;
   }
 }
