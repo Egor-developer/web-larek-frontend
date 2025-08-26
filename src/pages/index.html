@@ -39,7 +39,7 @@
 		</div>
 	</div>
 
-	<div class="modal">
+	<div class="modal" id="card-preview-modal">
 		<div class="modal__container">
 			<button class="modal__close" aria-label="закрыть"></button>
 			<div class="modal__content">
@@ -59,42 +59,25 @@
 		</div>
 	</div>
 
-	<div class="modal">
+	<div class="modal" id="basket-modal">
 		<div class="modal__container">
 			<button class="modal__close" aria-label="закрыть"></button>
 			<div class="modal__content">
 				<div class="basket">
 					<h2 class="modal__title">Корзина</h2>
 					<ul class="basket__list">
-						<li class="basket__item card card_compact">
-							<span class="basket__item-index">1</span>
-							<span class="card__title">Фреймворк куки судьбы</span>
-							<span class="card__price">2500 синапсов</span>
-							<button class="basket__item-delete" aria-label="удалить"></button>
-						</li>
-						<li class="basket__item card card_compact">
-							<span class="basket__item-index">2</span>
-							<span class="card__title">+1 час в сутках</span>
-							<span class="card__price">750 синапсов</span>
-							<button class="basket__item-delete" aria-label="удалить"></button>
-						</li>
-						<li class="basket__item card card_compact">
-							<span class="basket__item-index">3</span>
-							<span class="card__title">БЭМ-пилюлька</span>
-							<span class="card__price">150 000 синапсов</span>
-							<button class="basket__item-delete" aria-label="удалить"></button>
-						</li>
+						Корзина пуста
 					</ul>
 					<div class="modal__actions">
-						<button class="button">Оформить</button>
-						<span class="basket__price">153 250 синапсов</span>
+						<button class="button button__place" disabled>Оформить</button>
+						<span class="basket__price">0 синапсов</span>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<div class="modal">
+	<div class="modal" id="form-order">
 		<div class="modal__container">
 			<button class="modal__close" aria-label="закрыть"></button>
 			<div class="modal__content">
@@ -103,8 +86,8 @@
 						<div class="order__field">
 							<h2 class="modal__title">Способ оплаты</h2>
 							<div class="order__buttons">
-								<button type="button" class="button button_alt">Онлайн</button>
-								<button type="button" class="button button_alt">При получении</button>
+								<button type="button" class="button button_alt button_card">Онлайн</button>
+								<button type="button" class="button button_alt button_cash">При получении</button>
 							</div>
 						</div>
 						<label class="order__field">
@@ -113,14 +96,15 @@
 						</label>
 					</div>
 					<div class="modal__actions">
-						<button disabled class="button">Далее</button>
+						<button disabled class="button" type="submit">Далее</button>
 					</div>
+					<p class="error"></p>
 				</form>
 			</div>
 		</div>
 	</div>
 
-	<div class="modal">
+	<div class="modal" id="form-contacts">
 		<div class="modal__container">
 			<button class="modal__close" aria-label="закрыть"></button>
 			<div class="modal__content">
@@ -128,22 +112,23 @@
 					<div class="order">
 						<label class="order__field">
 							<span class="form__label modal__title">Email</span>
-							<input class="form__input" type="text" placeholder="Введите Email" />
+							<input class="form__input" name="email" type="text" placeholder="Введите Email" />
 						</label>
 						<label class="order__field">
 							<span class="form__label modal__title">Телефон</span>
-							<input class="form__input" type="text" placeholder="+7 (" />
+							<input class="form__input" name="phone" type="text" placeholder="+7 (" />
 						</label>
 					</div>
 					<div class="modal__actions">
-						<button disabled class="button">Оплатить</button>
+						<button disabled class="button" type="submit">Оплатить</button>
 					</div>
+					<p class="error"></p>
 				</form>
 			</div>
 		</div>
 	</div>
 
-	<div class="modal">
+	<div class="modal" id="success-modal">
 		<div class="modal__container">
 			<button class="modal__close" aria-label="закрыть"></button>
 			<div class="modal__content">

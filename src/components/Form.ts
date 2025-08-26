@@ -1,27 +1,23 @@
+import { ensureElement } from '../utils/utils';
+
 export class Form {
-  protected _submit: HTMLButtonElement;
-  protected _errors?: HTMLElement;
+	protected _form: HTMLElement;
+	protected _submit: HTMLButtonElement;
+	protected _errors: HTMLElement;
+	appState;
 
-  constructor(submit: HTMLButtonElement, errors?: HTMLElement) {
-    this._submit = submit;
-    this._errors = errors;
-  }
+	constructor(form: HTMLElement, appState: any) {
+		this.appState = appState;
+		this._form = form;
 
-  onInputChange(event: Event): void {
-    // Метод для обработки изменения поля ввода
-  }
+		this._submit = ensureElement<HTMLButtonElement>(
+			'button[type="submit"]',
+			this._form
+		);
+		this._errors = ensureElement<HTMLElement>('.error', this._form);
+	}
 
-  set valid(isValid: boolean) {
-    this._submit.disabled = !isValid;
-  }
-
-  set errors(errors: string | null) {
-    if (this._errors) {
-      this._errors.textContent = errors || '';
-    }
-  }
-
-  render(): void {
-    // Метод рендера формы (например, обновление состояния кнопки или ошибок)
-  }
+	set errors(message: string | null) {
+		this._errors.textContent = message || '';
+	}
 }

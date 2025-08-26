@@ -1,98 +1,43 @@
-export interface IProduct {
-  id: string;
-  description?: string;
-  image?: string;
-  title: string;
-  category?: string;
-  price: number | null;
-}
-
-export interface IOrderForm {
-  payment?: string;
-  address?: string;
-  email?: string;
-  phone?: string;
-  total?: number | string;
-}
-
-export interface IOrder extends IOrderForm {
-  items: string[];
-}
-
-export interface IAppState {
-  basketList: IProduct[];
-  preview: string | null;
-  loading: boolean;
-}
-
-export interface IApi {
-  baseUrl: string;
-  requestOptions: string;
-}
-
-export type FormErrors = {
-  [key in keyof IOrder]?: string;
-};
+import { IProduct } from '../types';
+import { ensureElement } from '../utils/utils';
+import { IEvents } from './base/events';
 
 export class ProductCard {
-  private _title: HTMLElement;
-  private _price: HTMLElement;
-  private _category: HTMLElement;
-  private _image?: HTMLImageElement;
-  private _button?: HTMLButtonElement;
-  private _index?: HTMLSpanElement;
+	private _title: HTMLElement;
+	private _price: HTMLElement;
+	private _category: HTMLElement;
+	private _image?: HTMLImageElement;
+	private _button?: HTMLElement;
+	index: number;
+	template: HTMLElement;
 
-  constructor(
-    title: HTMLElement,
-    price: HTMLElement,
-    category: HTMLElement,
-    image?: HTMLImageElement,
-    button?: HTMLButtonElement,
-    index?: HTMLSpanElement
-  ) {
-    this._title = title;
-    this._price = price;
-    this._category = category;
-    this._image = image;
-    this._button = button;
-    this._index = index;
-  }
+	constructor(template: HTMLElement, protected events: IEvents) {
+		this.template = template;
+	}
 
-  set id(value: string) {
-    if (this._index) {
-      this._index.textContent = value;
-    }
-  }
+	set id(id: number) {
+		this.index = id;
+	}
 
-  get id(): string | undefined {
-    return this._index?.textContent ?? undefined;
-  }
+	render(data: IProduct): HTMLElement {
+		const card = this.template.cloneNode(true) as HTMLElement;
 
-  set title(value: string) {
-    this._title.textContent = value;
-  }
+		this._title = ensureElement<HTMLElement>('.card__title', card);
+		this._price = ensureElement<HTMLElement>('.card__price', card);
+		this._category = ensureElement<HTMLElement>('.card__category', card);
+		this._image = ensureElement<HTMLImageElement>('.card__image', card);
+		this._button = card;
 
-  get title(): string {
-    return this._title.textContent ?? '';
-  }
+		this._button.addEventListener('click', () => {
+			this.events.emit('preview:changed', data);
+		});
 
-  get price(): string {
-    return this._price.textContent ?? '';
-  }
+		this._title.textContent = data.title;
+		this._price.textContent =
+			data.price === null ? 'Бесценно' : `${data.price} синапсов`;
+		this._category.textContent = data.category;
+		this._image.src = data.image;
 
-  set category(value: string) {
-    this._category.style.color = value;
-  }
-
-  set image(value: string) {
-    if (this._image) {
-      this._image.src = value;
-    }
-  }
-
-  set button(value: string) {
-    if (this._button) {
-      this._button.textContent = value;
-    }
-  }
+		return card;
+	}
 }

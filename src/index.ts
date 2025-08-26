@@ -1,71 +1,137 @@
-import { EventEmitter } from './components/EventEmitter';
-import { ProductModel } from './components/ProductModel';
+import './scss/styles.scss';
+
+import { EventEmitter } from './components/base/events';
+import { Modal } from './components/Modal';
 import { AppState } from './components/AppState';
-import UIComponent from './components/UIComponent';
+import { Contacts } from './components/Contacts';
 import { ProductCard } from './components/ProductCard';
+import { CartItem } from './components/CartItem';
+import { ProductDetails } from './components/ProductDetails';
+import { SuccessModal } from './components/SuccessModal';
 import { PageLayout } from './components/PageLayout';
-import { Form } from './components/Form';
-import { ShoppingCart } from './components/ShoppingCart';
-import { IProduct } from './types/index';
+import { Api } from './components/base/api';
+import { cloneTemplate, ensureElement } from './utils/utils';
+import { API_URL, CDN_URL } from './utils/constants';
+import { IProduct, IOrder } from './types/index';
+import { Order } from './components/Order';
 
+const api = new Api(API_URL);
 const events = new EventEmitter();
-
 const appState = new AppState(events);
+const modal = new Modal(events);
 
-const pageLayout = new PageLayout(events);
-const form = new Form(events);
-const shoppingCart = new ShoppingCart(events);
+const catalogCardTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
+const cloneCatalogCardTemplate = cloneTemplate(catalogCardTemplate);
+const productCard = new ProductCard(cloneCatalogCardTemplate, events);
+const previewCardTemplate = ensureElement<HTMLTemplateElement>(
+	'#card-preview-modal'
+);
+const productDetails = new ProductDetails(previewCardTemplate, events);
+const pageLayout = new PageLayout(events, modal);
 
 events.on('catalog:changed', (catalog: IProduct[]) => {
-  // Обновляет отображение карточек товаров в PageLayout
-  // Отображает каждую карточку с помощью ProductCard
-  const cards = catalog.map((item) => {
-    const card = new ProductCard(events);
-    return card.render(item);
-  });
-  pageLayout.renderCards(cards);
+	catalog.map((item) => {
+		pageLayout.addToCatalog(
+			productCard.render({ ...item, image: CDN_URL + item.image })
+		);
+	});
 });
 
-events.on('basket:changed', () => {
-  // Обновляет список товаров в ShoppingCart
-  shoppingCart.renderBasket(appState.basketList);
-  // Обновляет сумму заказа
-  shoppingCart.updateTotal();
-  // Обновляет счётчик товаров в PageLayout
-  pageLayout.updateCounter(appState.basketList.length);
+events.on('modal:open', () => {
+	pageLayout.locked = true;
+});
+
+events.on('modal:close', () => {
+	pageLayout.locked = false;
+});
+
+events.on('preview:changed', (product: IProduct) => {
+	modal.renderModal(
+		productDetails.setProduct(product, (p) => appState.addBasketList(p))
+	);
+});
+
+events.on('basket:changed', (data: IProduct) => {
+	if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+		appState.basketList.push(data);
+	}
+
+	const cardBasketTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
+	const basketCounter = ensureElement<HTMLElement>('.header__basket-counter');
+	const basketContainer = ensureElement<HTMLElement>('.basket__list');
+	const basketPrice = ensureElement<HTMLElement>('.basket__price');
+	const basketPlace = ensureElement<HTMLElement>('.button__place');
+
+	basketContainer.innerHTML = '';
+
+	if (Array.isArray(data) && data.length === 0) {
+		basketPlace.setAttribute('disabled', 'disabled');
+		basketContainer.textContent = 'Корзина пуста';
+	} else if (new CartItem().getTotalPrice(appState.basketList) === 0) {
+		basketPlace.setAttribute('disabled', 'disabled');
+	} else {
+		basketPlace.removeAttribute('disabled');
+	}
+
+	appState.basketList.forEach((item, index) => {
+		const card = new CartItem();
+		const clone = cloneTemplate(cardBasketTemplate);
+
+		card.updateQuantity(index + 1);
+
+		const productElement = card.setProduct(item, clone, (id) =>
+			appState.changeBasketList(id)
+		);
+
+		basketContainer.appendChild(productElement);
+	});
+
+	basketPrice.textContent = `${new CartItem().getTotalPrice(
+		appState.basketList
+	)} синапсов`;
+	pageLayout.counter = appState.getTotal();
+	basketCounter.textContent = String(pageLayout.counter);
+});
+
+events.on('order:open', () => {
+	const formOrder = ensureElement<HTMLElement>('#form-order');
+	modal.renderModal(formOrder)
+	new Order(formOrder, events, appState);
 });
 
 events.on('order:changed', () => {
-  // Обновляет форму заказа (Form)
-  form.renderOrder(appState.order);
-  // Контролирует активность кнопки оформления
-  form.updateOrderButtonState();
+	appState.order.items = appState.basketList.map((item) => item.id);
+	const total = new CartItem().getTotalPrice(appState.basketList);
+	appState.order.total = total;
 });
 
-events.on('contacts:changed', () => {
-  // Обновляет форму контактов
-  form.renderContacts(appState.contacts);
-  // Проверяет валидность формы
-  form.validate();
-});
-
-events.on('formErrors:changed', () => {
-  // Обновляет визуальное отображение ошибок в Form
-  form.renderErrors(appState.formErrors);
+events.on('contacts:open', () => {
+	modal.closeModal()
+	const formContacts = ensureElement<HTMLElement>('#form-contacts');
+	modal.renderModal(formContacts)
+	new Contacts(formContacts, events, appState);
 });
 
 events.on('order:completed', () => {
-  // Показывает SuccessModal с сообщением
-  form.showSuccess();
-  // Очищает корзину (clearBasket())
-  appState.clearBasket();
-  // Скрывает форму заказа
-  form.hide();
+	modal.closeModal()
+	api
+		.post<IOrder>('/order', appState.order)
+		.then((order) => {
+			modal.renderModal(new SuccessModal(order.total, modal).container)
+		})
+		.catch(console.error);
+	appState.clearBasket();
+	appState.clearOrder();
 });
 
-events.on('preview:changed', (productId: string) => {
-  // Показывает ProductDetails
-  pageLayout.showProductDetails(productId);
-  // Устанавливает данные для подробного просмотра
-  pageLayout.setPreviewData(productId);
-});
+type Product = {
+	total: number;
+	items: Array<any>;
+};
+
+api
+	.get<Product>('/product')
+	.then((res) => {
+		appState.setCatalog(res.items);
+	})
+	.catch(console.error);

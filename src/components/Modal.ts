@@ -1,25 +1,44 @@
+import { IEvents } from "./base/events";
+
 export class Modal {
-  private _closeButton: HTMLButtonElement;
+  private _closeButton: HTMLElement;
   private _content: HTMLElement;
+  private outsideClickHandler: (event: MouseEvent) => void;
 
-  constructor(closeButton: HTMLButtonElement, content: HTMLElement) {
-    this._closeButton = closeButton;
-    this._content = content;
+  constructor(protected events: IEvents) {
+    this.events = events
   }
 
-  set content(data: HTMLElement) {
-    this._content = data;
+  private handleOutsideClick(event: MouseEvent) {
+		const modalContent = this._content.querySelector('.modal__container');
+		if (!modalContent.contains(event.target as Node)) {
+			this.closeModal();
+		}
+	}
+
+  openModal() {
+    this._content.classList.add('modal_active');
+    this.events.emit('modal:open');
+
+    setTimeout(() => {
+			document.addEventListener('click', this.outsideClickHandler);
+		}, 0);
   }
 
-  openModal(): void {
-    // реализация открытия модального окна
+  closeModal() {
+    this._content.classList.remove('modal_active');
+    this.events.emit('modal:close');
+
+    document.removeEventListener('click', this.outsideClickHandler);
   }
 
-  closeModal(): void {
-    // реализация закрытия модального окна
-  }
+  renderModal(content: HTMLElement): void {
+    this._content = content
 
-  renderModal(): void {
-    // реализация рендера модального окна
+    this._closeButton = this._content.querySelector('.modal__close');
+		this._closeButton.addEventListener('click', () => this.closeModal());
+    this.outsideClickHandler = this.handleOutsideClick.bind(this);
+
+    this.openModal()
   }
 }
