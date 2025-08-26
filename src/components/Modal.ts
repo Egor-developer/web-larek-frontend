@@ -1,3 +1,4 @@
+import { ensureElement } from "../utils/utils";
 import { IEvents } from "./base/events";
 
 export class Modal {
@@ -10,7 +11,7 @@ export class Modal {
   }
 
   private handleOutsideClick(event: MouseEvent) {
-		const modalContent = this._content.querySelector('.modal__container');
+		const modalContent = ensureElement<HTMLElement>('.modal__container', this._content);
 		if (!modalContent.contains(event.target as Node)) {
 			this.closeModal();
 		}
@@ -35,7 +36,7 @@ export class Modal {
   renderModal(content: HTMLElement): void {
     this._content = content
 
-    this._closeButton = this._content.querySelector('.modal__close');
+    this._closeButton = ensureElement<HTMLElement>('.modal__close', this._content);
 		this._closeButton.addEventListener('click', () => this.closeModal());
     this.outsideClickHandler = this.handleOutsideClick.bind(this);
 

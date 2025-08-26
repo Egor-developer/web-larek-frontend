@@ -9,7 +9,7 @@ export class CartItem {
     ensureElement<HTMLElement>('.card__price', container).textContent = product.price === null ? 'Бесценно' : `${product.price} синапсов`;
     ensureElement<HTMLElement>('.basket__item-index', container).textContent = String(this.quantity)
 
-    container.querySelector('.basket__item-delete').addEventListener('click', () => callback(product.id))
+    ensureElement<HTMLElement>('.basket__item-delete', container).addEventListener('click', () => callback(product.id))
 
     return container
   }

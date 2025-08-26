@@ -4,7 +4,7 @@ export class SuccessModal {
   container: HTMLElement
 
   constructor(total: string | number, modal: any) {
-    this.container = document.querySelector('#success-modal')
+    this.container = ensureElement<HTMLElement>('#success-modal')
 
     const description = ensureElement<HTMLElement>('.film__description', this.container)
     description.textContent = `Списано ${total} синапсов`
