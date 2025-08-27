@@ -35,6 +35,17 @@ export class ProductCard {
 		this._title.textContent = data.title;
 		this._price.textContent =
 			data.price === null ? 'Бесценно' : `${data.price} синапсов`;
+		if (data.category === 'софт-скил') {
+			this._category.classList.add('card__category_soft');
+		} else if (data.category === 'другое') {
+			this._category.classList.add('card__category_other');
+		} else if (data.category === 'дополнительное') {
+			this._category.classList.add('card__category_additional');
+		} else if (data.category === 'кнопка') {
+			this._category.classList.add('card__category_button');
+		} else if (data.category === 'хард-скил') {
+			this._category.classList.add('card__category_hard');
+		}
 		this._category.textContent = data.category;
 		this._image.src = data.image;
 
