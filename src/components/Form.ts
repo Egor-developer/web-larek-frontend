@@ -20,4 +20,8 @@ export class Form {
 	set errors(message: string | null) {
 		this._errors.textContent = message || '';
 	}
+
+	get form():HTMLElement {
+		return this._form
+	}
 }

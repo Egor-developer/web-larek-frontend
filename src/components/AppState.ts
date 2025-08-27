@@ -9,8 +9,6 @@ export class AppState {
 		phone: '',
 		address: '',
 		payment: undefined,
-		total: undefined,
-		items: [],
 	};
 	formErrors: FormErrors = {};
 
@@ -36,8 +34,6 @@ export class AppState {
 			phone: '',
 			address: '',
 			payment: undefined,
-			total: undefined,
-			items: [],
 		};
 		this.formErrors = {};
 		this.events.emit('order:changed', this.order);

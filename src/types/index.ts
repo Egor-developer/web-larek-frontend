@@ -7,16 +7,16 @@ export interface IProduct {
   price: number | null;
 }
 
-export interface IOrderForm {
+export interface IOrder {
   payment?: string;
   address?: string;
   email?: string;
   phone?: string;
-  total?: number | string;
 }
 
-export interface IOrder extends IOrderForm{
-  items: string[];
+export interface IFullOrder extends IOrder {
+  items?: string[];
+  total?: number | string;
 }
 
 export interface IAppState {

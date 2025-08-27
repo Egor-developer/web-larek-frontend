@@ -12,13 +12,18 @@ import { PageLayout } from './components/PageLayout';
 import { Api } from './components/base/api';
 import { cloneTemplate, ensureElement } from './utils/utils';
 import { API_URL, CDN_URL } from './utils/constants';
-import { IProduct, IOrder } from './types/index';
+import { IProduct, IFullOrder } from './types/index';
 import { Order } from './components/Order';
+import { Basket } from './components/Basket';
 
 const api = new Api(API_URL);
 const events = new EventEmitter();
 const appState = new AppState(events);
 const modal = new Modal(events);
+const successModal = new SuccessModal(modal);
+const basket = new Basket();
+const oreder = new Order(events, appState);
+const contacts = new Contacts(events, appState);
 
 const catalogCardTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const cloneCatalogCardTemplate = cloneTemplate(catalogCardTemplate);
@@ -28,6 +33,8 @@ const previewCardTemplate = ensureElement<HTMLTemplateElement>(
 );
 const productDetails = new ProductDetails(previewCardTemplate, events);
 const pageLayout = new PageLayout(events, modal);
+
+let fullOrder: IFullOrder = {};
 
 events.on('catalog:changed', (catalog: IProduct[]) => {
 	catalog.map((item) => {
@@ -51,77 +58,45 @@ events.on('preview:changed', (product: IProduct) => {
 	);
 });
 
-events.on('basket:changed', (data: IProduct) => {
+events.on('basket:changed', (data: IProduct[]) => {
 	if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
 		appState.basketList.push(data);
 	}
-
-	const cardBasketTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
-	const basketCounter = ensureElement<HTMLElement>('.header__basket-counter');
-	const basketContainer = ensureElement<HTMLElement>('.basket__list');
-	const basketPrice = ensureElement<HTMLElement>('.basket__price');
-	const basketPlace = ensureElement<HTMLElement>('.button__place');
-
-	basketContainer.innerHTML = '';
-
-	if (Array.isArray(data) && data.length === 0) {
-		basketPlace.setAttribute('disabled', 'disabled');
-		basketContainer.textContent = 'Корзина пуста';
-	} else if (new CartItem().getTotalPrice(appState.basketList) === 0) {
-		basketPlace.setAttribute('disabled', 'disabled');
-	} else {
-		basketPlace.removeAttribute('disabled');
-	}
-
-	appState.basketList.forEach((item, index) => {
-		const card = new CartItem();
-		const clone = cloneTemplate(cardBasketTemplate);
-
-		card.updateQuantity(index + 1);
-
-		const productElement = card.setProduct(item, clone, (id) =>
-			appState.changeBasketList(id)
-		);
-
-		basketContainer.appendChild(productElement);
-	});
-
-	basketPrice.textContent = `${new CartItem().getTotalPrice(
-		appState.basketList
-	)} синапсов`;
 	pageLayout.counter = appState.getTotal();
-	basketCounter.textContent = String(pageLayout.counter);
+	basket.render(
+		appState.basketList,
+		String(pageLayout.counter),
+		new CartItem(),
+		(id) => appState.changeBasketList(id)
+	);
 });
 
 events.on('order:open', () => {
-	const formOrder = ensureElement<HTMLElement>('#form-order');
-	modal.renderModal(formOrder)
-	new Order(formOrder, events, appState);
+	modal.renderModal(oreder.form);
 });
 
-events.on('order:changed', () => {
-	appState.order.items = appState.basketList.map((item) => item.id);
-	const total = new CartItem().getTotalPrice(appState.basketList);
-	appState.order.total = total;
-});
+// events.on('order:changed', () => {
+
+// });
 
 events.on('contacts:open', () => {
-	modal.closeModal()
-	const formContacts = ensureElement<HTMLElement>('#form-contacts');
-	modal.renderModal(formContacts)
-	new Contacts(formContacts, events, appState);
+	modal.closeModal();
+	modal.renderModal(contacts.form);
 });
 
 events.on('order:completed', () => {
-	modal.closeModal()
+	fullOrder = appState.order;
+	fullOrder.items = appState.basketList.map((item) => item.id);
+	fullOrder.total = new CartItem().getTotalPrice(appState.basketList);
 	api
-		.post<IOrder>('/order', appState.order)
+		.post<IFullOrder>('/order', fullOrder)
 		.then((order) => {
-			modal.renderModal(new SuccessModal(order.total, modal).container)
+			modal.closeModal();
+			appState.clearBasket();
+			appState.clearOrder();
+			modal.renderModal(successModal.render(order.total));
 		})
 		.catch(console.error);
-	appState.clearBasket();
-	appState.clearOrder();
 });
 
 type Product = {

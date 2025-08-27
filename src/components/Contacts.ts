@@ -1,10 +1,11 @@
-import { ensureAllElements } from '../utils/utils';
+import { ensureAllElements, ensureElement } from '../utils/utils';
 import { IEvents } from './base/events';
 import { Form } from './Form';
 
 export class Contacts extends Form {
-	constructor(form: HTMLElement, protected events: IEvents, appState: any) {
-		super(form, appState);
+	constructor(protected events: IEvents, appState: any) {
+		const formContacts = ensureElement<HTMLElement>('#form-contacts');
+		super(formContacts, appState);
 
 		const inputs = ensureAllElements<HTMLInputElement>('.form__input', this._form)
 

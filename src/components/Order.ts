@@ -7,8 +7,9 @@ export class Order extends Form {
 	private _paymentCash: HTMLButtonElement;
 	private _selectedMethod: 'card' | 'cash' | null = null;
 
-	constructor(form: HTMLElement, protected events: IEvents, appState: any) {
-		super(form, appState);
+	constructor(protected events: IEvents, appState: any) {
+		const formOrder = ensureElement<HTMLElement>('#form-order');
+		super(formOrder, appState);
 
 		const input = ensureElement<HTMLInputElement>('.form__input', this._form);
 
