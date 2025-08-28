@@ -54,7 +54,7 @@ events.on('modal:close', () => {
 
 events.on('preview:changed', (product: IProduct) => {
 	modal.renderModal(
-		productDetails.setProduct(product, (p) => appState.addBasketList(p))
+		productDetails.setProduct(product, appState.basketList, (p) => appState.addBasketList(p))
 	);
 });
 

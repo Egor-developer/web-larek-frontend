@@ -10,10 +10,11 @@ export class ProductDetails {
     this.container = container;
   }
 
-  setProduct(product: IProduct, callback: (product: IProduct) => void): HTMLElement {
+  setProduct(product: IProduct, listPorduct: IProduct[], callback: (product: IProduct) => void): HTMLElement {
     ensureElement<HTMLImageElement>('.card__image', this.container).src = product.image;
     ensureElement<HTMLElement>('.card__title', this.container).textContent = product.title;
     ensureElement<HTMLElement>('.card__text', this.container).textContent = product.description;
+    const price = ensureElement<HTMLElement>('.card__price', this.container)
 
     const category = ensureElement<HTMLElement>('.card__category', this.container)
     category.textContent = product.category;
@@ -40,12 +41,18 @@ export class ProductDetails {
     this.actionButton.onclick = () => callback(product);
     
     if (product.price === null) {
-      ensureElement<HTMLElement>('.card__price', this.container).textContent = 'Бесценно'
+      price.textContent = 'Бесценно'
       this.actionButton.setAttribute('disabled', 'disabled');
     } else {
       this.actionButton.removeAttribute('disabled');
-      ensureElement<HTMLElement>('.card__price', this.container).textContent = `${product.price} синапсов`
+      price.textContent = `${product.price} синапсов`
     }
+
+    listPorduct.forEach((elem) => {
+      if (elem === product) {
+        this.actionButton.setAttribute('disabled', 'disabled')
+      }
+    })
 
     return this.container;
   }
