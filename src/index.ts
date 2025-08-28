@@ -12,7 +12,7 @@ import { PageLayout } from './components/PageLayout';
 import { Api } from './components/base/api';
 import { cloneTemplate, ensureElement } from './utils/utils';
 import { API_URL, CDN_URL } from './utils/constants';
-import { IProduct, IFullOrder } from './types/index';
+import { IProduct, IFullOrder, IOrder } from './types/index';
 import { Order } from './components/Order';
 import { Basket } from './components/Basket';
 
@@ -22,8 +22,12 @@ const appState = new AppState(events);
 const modal = new Modal(events);
 const successModal = new SuccessModal(modal);
 const basket = new Basket();
-const oreder = new Order(events, appState);
-const contacts = new Contacts(events, appState);
+const oreder = new Order(events, appState.formErrors, () =>
+	appState.validateOrder()
+);
+const contacts = new Contacts(events, appState.formErrors, () =>
+	appState.validateContacts()
+);
 
 const catalogCardTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const cloneCatalogCardTemplate = cloneTemplate(catalogCardTemplate);
@@ -54,7 +58,9 @@ events.on('modal:close', () => {
 
 events.on('preview:changed', (product: IProduct) => {
 	modal.renderModal(
-		productDetails.setProduct(product, appState.basketList, (p) => appState.addBasketList(p))
+		productDetails.setProduct(product, appState.basketList, (p) =>
+			appState.addBasketList(p)
+		)
 	);
 });
 
@@ -75,9 +81,9 @@ events.on('order:open', () => {
 	modal.renderModal(oreder.form);
 });
 
-// events.on('order:changed', () => {
-
-// });
+events.on('order:changed', (data: { title: keyof IOrder; value: string }) => {
+	appState.setOrderField(data.title, data.value);
+});
 
 events.on('contacts:open', () => {
 	modal.closeModal();

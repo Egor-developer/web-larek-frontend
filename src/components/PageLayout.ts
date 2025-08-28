@@ -21,7 +21,7 @@ export class PageLayout {
 		});
 
 		this._buttonPlace.addEventListener('click', () => {
-			modal.closeModal()
+			modal.closeModal();
 			this.events.emit('order:open');
 		});
 	}

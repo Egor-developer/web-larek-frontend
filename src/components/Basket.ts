@@ -39,9 +39,9 @@ export class Basket {
 		}
 
 		this.list.forEach((item, index) => {
-      const cloneCardBasketTemplate = cloneTemplate(this.cardBasketTemplate)
+			const cloneCardBasketTemplate = cloneTemplate(this.cardBasketTemplate);
 
-      cartItem.updateQuantity(index + 1);
+			cartItem.updateQuantity(index + 1);
 
 			const productElement = cartItem.setProduct(
 				item,

@@ -53,12 +53,10 @@ export class AppState {
 
 	setOrderField(field: keyof IOrder, value: string | number | IProduct[]) {
 		this.order[field] = value as never;
-		this.events.emit('order:changed', this.order);
 	}
 
 	setContactsField(field: 'email' | 'phone', value: string) {
 		this.order[field] = value;
-		this.events.emit('order:changed', this.order);
 	}
 
 	validateOrder(): boolean {

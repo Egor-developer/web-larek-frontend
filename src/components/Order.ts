@@ -6,10 +6,17 @@ export class Order extends Form {
 	private _paymentCard: HTMLButtonElement;
 	private _paymentCash: HTMLButtonElement;
 	private _selectedMethod: 'card' | 'cash' | null = null;
+	protected validateOrderFunction: () => boolean;
 
-	constructor(protected events: IEvents, appState: any) {
+	constructor(
+		protected events: IEvents,
+		formErrors: Record<string, string> = {},
+		validateOrderFunction: () => boolean
+	) {
 		const formOrder = ensureElement<HTMLElement>('#form-order');
-		super(formOrder, appState);
+		super(formOrder, formErrors);
+
+		this.validateOrderFunction = validateOrderFunction;
 
 		const input = ensureElement<HTMLInputElement>('.form__input', this._form);
 
@@ -33,13 +40,9 @@ export class Order extends Form {
 			this.selectPayment('cash')
 		);
 
-		input.addEventListener('input', (event: Event) => {
-			this.onInputChange(event);
-		});
-
 		this._form.addEventListener('submit', (e) => {
 			e.preventDefault();
-			if (!this.appState.validateOrder()) return;
+			if (!this.validateOrderFunction()) return;
 			input.value = '';
 			this.errors = '';
 			this._paymentCard.classList.remove('button_alt-active');
@@ -53,16 +56,19 @@ export class Order extends Form {
 		const target = event.target as HTMLInputElement;
 		if (!target) return;
 
-		this.errors = this.appState.formErrors.address;
+		this.errors = this.formErrors.address;
 
-		this.appState.setOrderField('address', target.value);
+		this.events.emit('order:changed', {
+			title: 'address',
+			value: target.value,
+		});
 		this.renderButton();
 	}
 
 	private selectPayment(method: 'card' | 'cash') {
 		this._selectedMethod = method;
-		this.errors = this.appState.formErrors.method;
-		this.appState.setOrderField('payment', method);
+		this.errors = this.formErrors.method;
+		this.events.emit('order:changed', { title: 'payment', value: method });
 		this.renderButton();
 
 		this._paymentCard.classList.remove('button_alt-active');
@@ -76,7 +82,7 @@ export class Order extends Form {
 	}
 
 	renderButton() {
-		if (this.appState.validateOrder()) {
+		if (this.validateOrderFunction()) {
 			this._submit.removeAttribute('disabled');
 		} else {
 			this._submit.setAttribute('disabled', 'disabled');

@@ -3,26 +3,37 @@ import { IEvents } from './base/events';
 import { Form } from './Form';
 
 export class Contacts extends Form {
-	constructor(protected events: IEvents, appState: any) {
-		const formContacts = ensureElement<HTMLElement>('#form-contacts');
-		super(formContacts, appState);
+	protected validateContactsFunction: () => boolean;
 
-		const inputs = ensureAllElements<HTMLInputElement>('.form__input', this._form)
+	constructor(
+		protected events: IEvents,
+		formErrors: Record<string, string> = {},
+		validateContactsFunction: () => boolean
+	) {
+		const formContacts = ensureElement<HTMLElement>('#form-contacts');
+		super(formContacts, formErrors);
+
+		this.validateContactsFunction = validateContactsFunction;
+
+		const inputs = ensureAllElements<HTMLInputElement>(
+			'.form__input',
+			this._form
+		);
 
 		inputs.forEach((input) =>
-				input.addEventListener('input', (event: Event) =>
-	  			this.onInputChange(event)
-				)
-			);
+			input.addEventListener('input', (event: Event) =>
+				this.onInputChange(event)
+			)
+		);
 
 		this._form.addEventListener('submit', (e) => {
 			e.preventDefault();
-			if (!this.appState.validateContacts()) return
-      inputs.forEach((elem) => {
-        elem.value = ''
-      })
-      this.errors = ''
-      this._submit.setAttribute('disabled', 'disabled');
+			if (!this.validateContactsFunction()) return;
+			inputs.forEach((elem) => {
+				elem.value = '';
+			});
+			this.errors = '';
+			this._submit.setAttribute('disabled', 'disabled');
 			this.events.emit('order:completed');
 		});
 	}
@@ -34,17 +45,17 @@ export class Contacts extends Form {
 		const { name, value } = target;
 
 		if (name === 'phone') {
-			this.appState.setContactsField('phone', value);
-			this.errors = this.appState.formErrors.phone
+			this.events.emit('order:changed', { title: 'phone', value: value });
+			this.errors = this.formErrors.phone;
 		} else if (name === 'email') {
-			this.appState.setContactsField('email', value);
-			this.errors = this.appState.formErrors.email
+			this.events.emit('order:changed', { title: 'email', value: value });
+			this.errors = this.formErrors.email;
 		}
-		this.renderButton()
+		this.renderButton();
 	}
 
 	renderButton() {
-		if (this.appState.validateContacts()) {
+		if (this.validateContactsFunction()) {
 			this._submit.removeAttribute('disabled');
 		} else {
 			this._submit.setAttribute('disabled', 'disabled');

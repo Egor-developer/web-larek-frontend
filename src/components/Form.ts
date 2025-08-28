@@ -4,10 +4,10 @@ export class Form {
 	protected _form: HTMLElement;
 	protected _submit: HTMLButtonElement;
 	protected _errors: HTMLElement;
-	appState;
+	protected formErrors: Record<string, string> = {};
 
-	constructor(form: HTMLElement, appState: any) {
-		this.appState = appState;
+	constructor(form: HTMLElement, formErrors: Record<string, string> = {}) {
+		this.formErrors = formErrors;
 		this._form = form;
 
 		this._submit = ensureElement<HTMLButtonElement>(
@@ -21,7 +21,7 @@ export class Form {
 		this._errors.textContent = message || '';
 	}
 
-	get form():HTMLElement {
-		return this._form
+	get form(): HTMLElement {
+		return this._form;
 	}
 }
